@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget * parent, Qt::WindowFlags flags)
     setAttribute(Qt::WA_DeleteOnClose);
     setUnifiedTitleAndToolBarOnMac(true);
 
-    libusb_init(NULL);
+    libusc_init();
 
     createActions();
     createMenus();
@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget * parent, Qt::WindowFlags flags)
 MainWindow::~MainWindow()
 {
     libusc_free_device_list(device_list, 1);
-    libusb_exit(NULL);
+    libusc_exit();
 }
 
 void MainWindow::open()
@@ -131,7 +131,7 @@ void MainWindow::createToolBars()
 
     QComboBox * deviceList = new QComboBox(toolbar);
 
-    ssize_t cnt = libusc_get_device_list(NULL, &device_list);
+    const int cnt = libusc_get_device_list(&device_list);
     for (int i=0; i<cnt; i++)
     {
         libusc_device_settings settings;

@@ -1,8 +1,12 @@
 #include "libusc.h"
 
+#include <libusb.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static libusb_context * ctx = NULL;
 
 enum libusc_request
 {
@@ -234,7 +238,17 @@ void libusc_set_raw_parameter(libusc_device *dev, unsigned short parameter, unsi
     libusc_control_transfer(dev, 0x40, (unsigned char)REQUEST_SET_PARAMETER, value, index, NULL, 0);
 }
 
-ssize_t libusc_get_device_list(libusb_context *ctx, libusc_device ***list)
+void libusc_init()
+{
+    libusb_init(&ctx);
+}
+
+void libusc_exit()
+{
+    libusb_exit(ctx);
+}
+
+int libusc_get_device_list(libusc_device ***list)
 {
     const uint16_t vendorID = 0x1ffb;
     const uint16_t productIDArray[] = { 0x0089, 0x008a, 0x008b, 0x008c };

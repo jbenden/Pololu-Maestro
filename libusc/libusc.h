@@ -1,8 +1,13 @@
 #ifndef __LIBUSC_H__
 #define __LIBUSC_H__
 
+#ifdef _WIN32
+#define USC_API_EXPORT __declspec(dllexport)
+#else
+#define USC_API_EXPORT /**< API export macro */
+#endif
+
 #include <sys/types.h>
-#include <libusb.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -206,31 +211,38 @@ extern "C" {
     typedef struct libusc_servo_status libusc_servo_status;
     typedef struct libusc_device libusc_device;
 
-    ssize_t libusc_get_device_list(libusb_context *ctx, libusc_device ***list);
-    void libusc_free_device_list(libusc_device **list, int unref_devices);
+    /// Initialize the library.
+    void USC_API_EXPORT libusc_init();
 
-    libusc_device *libusc_ref_device(libusc_device *dev);
-    void libusc_unref_device(libusc_device *dev);
+    /// Finalize the library.
+    void USC_API_EXPORT libusc_exit();
 
-    int libusc_get_num_channels(libusc_device *dev);
+    /// Enumerate the Maestro devices.
+    int USC_API_EXPORT libusc_get_device_list(libusc_device ***list);
+    void USC_API_EXPORT libusc_free_device_list(libusc_device **list, int unref_devices);
 
-    void libusc_set_target(libusc_device *dev, unsigned char servo, unsigned short value);
-    void libusc_set_speed(libusc_device *dev, unsigned char servo, unsigned short value);
-    void libusc_set_acceleration(libusc_device *dev, unsigned char servo, unsigned short value);
-    int libusc_get_servo_status(libusc_device *dev, unsigned char servo, libusc_servo_status * status);
+    libusc_device USC_API_EXPORT *libusc_ref_device(libusc_device *dev);
+    void USC_API_EXPORT libusc_unref_device(libusc_device *dev);
 
-    void libusc_restore_default_configuration(libusc_device *dev);
+    int USC_API_EXPORT libusc_get_num_channels(libusc_device *dev);
+
+    void USC_API_EXPORT libusc_set_target(libusc_device *dev, unsigned char servo, unsigned short value);
+    void USC_API_EXPORT libusc_set_speed(libusc_device *dev, unsigned char servo, unsigned short value);
+    void USC_API_EXPORT libusc_set_acceleration(libusc_device *dev, unsigned char servo, unsigned short value);
+    int USC_API_EXPORT libusc_get_servo_status(libusc_device *dev, unsigned char servo, libusc_servo_status * status);
+
+    void USC_API_EXPORT libusc_restore_default_configuration(libusc_device *dev);
     
-    int libusc_get_device_settings(libusc_device *dev, libusc_device_settings * settings);
-    int libusc_set_device_settings(libusc_device *dev, libusc_device_settings * settings);
+    int USC_API_EXPORT libusc_get_device_settings(libusc_device *dev, libusc_device_settings * settings);
+    int USC_API_EXPORT libusc_set_device_settings(libusc_device *dev, libusc_device_settings * settings);
 
-    int libusc_get_channel_settings(libusc_device *dev, unsigned char channel, libusc_channel_settings * settings);
-    int libusc_set_channel_settings(libusc_device *dev, unsigned char channel, libusc_channel_settings * settings);
+    int USC_API_EXPORT libusc_get_channel_settings(libusc_device *dev, unsigned char channel, libusc_channel_settings * settings);
+    int USC_API_EXPORT libusc_set_channel_settings(libusc_device *dev, unsigned char channel, libusc_channel_settings * settings);
 
-    void libusc_erase_script(libusc_device *dev);
-    void libusc_restart_script(libusc_device *dev);
-    void libusc_set_script_done(libusc_device *dev, unsigned char value);
-    void libusc_write_script(libusc_device *dev, const char* bytecode, int length);
+    void USC_API_EXPORT libusc_erase_script(libusc_device *dev);
+    void USC_API_EXPORT libusc_restart_script(libusc_device *dev);
+    void USC_API_EXPORT libusc_set_script_done(libusc_device *dev, unsigned char value);
+    void USC_API_EXPORT libusc_write_script(libusc_device *dev, const char* bytecode, int length);
 
 #ifdef __cplusplus
 }
