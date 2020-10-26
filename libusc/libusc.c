@@ -6,6 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+inline static uint16_t load16(uint8_t *b) {
+  uint16_t x;
+  memcpy(&x, b, 2);
+  return x;
+}
+
 static libusb_context * ctx = NULL;
 
 enum libusc_request
@@ -130,22 +136,21 @@ struct libusc_range
 
 typedef struct libusc_range libusc_range;
 
-libusc_range* libusc_get_range(enum libusc_parameter parameterId)
+static const libusc_range *libusc_get_range(enum libusc_parameter parameterId)
 {
-    //static libusc_range u32 = {4, 0, 0x7FFFFFFF};
-    static libusc_range u16 = {2, 0, 0xFFFF};
-    //static libusc_range u12 = {2, 0, 0x0FFF};
-    //static libusc_range u10 = {2, 0, 0x03FF};
-    static libusc_range u8 = {1, 0, 0xFF};
-    static libusc_range u7 = {1, 0, 0x7F};
-    static libusc_range boolean = {1, 0, 1};
-    static libusc_range offset = {1, 0, 254};
-    static libusc_range u2 = {1, 0, 3};
-    static libusc_range u32440 = {2, 0, 32440};
-    static libusc_range u50 = {1, 1, 50};
+  // static libusc_range u32 = {4, 0, 0x7FFFFFFF};
+  static const libusc_range u16 = {2, 0, 0xFFFF};
+  // static libusc_range u12 = {2, 0, 0x0FFF};
+  // static libusc_range u10 = {2, 0, 0x03FF};
+  static const libusc_range u8 = {1, 0, 0xFF};
+  static const libusc_range u7 = {1, 0, 0x7F};
+  static const libusc_range boolean = {1, 0, 1};
+  static const libusc_range offset = {1, 0, 254};
+  static const libusc_range u2 = {1, 0, 3};
+  static const libusc_range u32440 = {2, 0, 32440};
+  static const libusc_range u50 = {1, 1, 50};
 
-    switch (parameterId)
-    {
+  switch (parameterId) {
     case PARAMETER_INITIALIZED:
     case PARAMETER_SERVOS_AVAILABLE:
     case PARAMETER_SERVO_PERIOD:
@@ -177,6 +182,7 @@ libusc_range* libusc_get_range(enum libusc_parameter parameterId)
         return &offset;
     default: break;
     }
+
     // must be one of the servo parameters
     switch ((((unsigned char)parameterId- (unsigned char)PARAMETER_SERVO0_HOME) % 9) + (unsigned char)PARAMETER_SERVO0_HOME)
     {
@@ -195,7 +201,7 @@ libusc_range* libusc_get_range(enum libusc_parameter parameterId)
     return &u8;
 }
 
-unsigned int libusc_control_transfer(libusc_device *dev, unsigned char RequestType, unsigned char Request, unsigned short Value, unsigned short Index, unsigned char *data, unsigned short length)
+static unsigned int libusc_control_transfer(libusc_device *dev, unsigned char RequestType, unsigned char Request, unsigned short Value, unsigned short Index, unsigned char *data, unsigned short length)
 {
     if(!dev)
         return 0;
@@ -206,9 +212,9 @@ unsigned int libusc_control_transfer(libusc_device *dev, unsigned char RequestTy
     return libusb_control_transfer(dev->dev_handle, RequestType, Request, Value, Index, data, length, 5000);
 }
 
-unsigned short libusc_get_raw_parameter(libusc_device *dev, unsigned short parameter)
+static unsigned short libusc_get_raw_parameter(libusc_device *dev, unsigned short parameter)
 {
-    libusc_range* range = libusc_get_range(parameter);
+    const libusc_range* range = libusc_get_range((enum libusc_parameter) parameter);
     unsigned short value = 0;
     unsigned short buffer;
 
@@ -228,9 +234,9 @@ unsigned short libusc_get_raw_parameter(libusc_device *dev, unsigned short param
     return value;
 }
 
-void libusc_set_raw_parameter(libusc_device *dev, unsigned short parameter, unsigned short value)
+static void libusc_set_raw_parameter(libusc_device *dev, unsigned short parameter, unsigned short value)
 {
-    libusc_range* range = libusc_get_range(parameter);
+    const libusc_range* range = libusc_get_range((enum libusc_parameter) parameter);
     //requireArgumentRange(value, range.minimumValue, range.maximumValue, "" /*MLparameter*/);
     int bytes = range->bytes;
     unsigned short index = (unsigned short)((bytes << 8) + parameter); // high bytes = # of bytes
@@ -259,7 +265,8 @@ int libusc_get_device_list(libusc_device ***list)
     ssize_t len = 0;
     int i,j;
 
-    (*list) = calloc(1,sizeof(libusc_device*));
+    (*list) = (libusc_device**) calloc(1,sizeof(libusc_device*));
+    if (NULL == *list) abort();
 
     cnt = libusb_get_device_list(ctx, &devs);
     if (cnt < 0)
@@ -272,21 +279,25 @@ int libusc_get_device_list(libusc_device ***list)
         int r = libusb_get_device_descriptor(devs[i], &desc);
         if (r < 0)
         {
-            fprintf(stderr, "failed to get device descriptor");
-            return 0;
+          libusb_free_device_list(devs, 1);
+          fprintf(stderr, "failed to get device descriptor");
+          return 0;
         }
 
         if (desc.idVendor == vendorID)
         {
-            for (j = 0; j < (int)sizeof(productIDArray); j++)
+          for (j = 0; j < (int)(sizeof(productIDArray)/sizeof(productIDArray[0])); j++)
             {
                 if (desc.idProduct == productIDArray[j])
                 {
                     struct libusc_device* usc;
 
-                    (*list) = realloc(*list, (len+2)*sizeof(libusc_device*));
+                    libusc_device ** tmp_list = (libusc_device**) realloc(*list, (len+2)*sizeof(libusc_device*));
+                    if (NULL == tmp_list) abort();
+                    (*list) = tmp_list;
 
-                    usc = malloc(sizeof(libusc_device));
+                    usc = (libusc_device*) malloc(sizeof(libusc_device));
+                    if (NULL == usc) abort();
                     usc->dev = libusb_ref_device(dev);
                     usc->dev_handle = NULL;
 
@@ -397,13 +408,14 @@ int libusc_get_servo_status(libusc_device *dev, unsigned char servo, libusc_serv
 {
     unsigned int size = dev->channelcnt * 7;
     unsigned char* buffer = (unsigned char*)malloc(size);
+    if (NULL == buffer) abort();
 
     unsigned int bytesRead = libusc_control_transfer(dev, 0xC0, (unsigned char)REQUEST_GET_SERVO_SETTINGS, 0, 0, (unsigned char*)buffer, size);
     if (bytesRead == size)
     {
-        status->position = *(unsigned short*)&buffer[servo * 7+0];
-        status->target = *(unsigned short*)&buffer[servo * 7+2];
-        status->speed = *(unsigned short*)&buffer[servo * 7+4];
+        status->position = load16(&buffer[servo * 7+0]);
+        status->target = load16(&buffer[servo * 7+2]);
+        status->speed = load16(&buffer[servo * 7+4]);
         status->acceleration = *(unsigned char*)&buffer[servo * 7+6];
     }
 
@@ -418,7 +430,7 @@ void libusc_restore_default_configuration(libusc_device *dev)
 }
 
 
-unsigned int libusc_convert_spbrg_to_bps(unsigned short spbrg)
+static unsigned int libusc_convert_spbrg_to_bps(unsigned short spbrg)
 {
     /// Instructions are executed at 12 MHZ
     static const int INSTRUCTION_FREQUENCY = 12000000;
@@ -433,7 +445,7 @@ unsigned int libusc_convert_spbrg_to_bps(unsigned short spbrg)
 
 /// The converts from bps to SPBRG, so it is the opposite of libusc_convert_spbrg_to_bps.
 /// The purse math formula is spbrg = INSTRUCTION_FREQUENCY/Baud - 1.
-unsigned short libusc_convert_bps_to_spbrg(unsigned int bps)
+static unsigned short libusc_convert_bps_to_spbrg(unsigned int bps)
 {
     /// Instructions are executed at 12 MHZ
     static const int INSTRUCTION_FREQUENCY = 12000000;
@@ -529,14 +541,14 @@ int libusc_set_device_settings(libusc_device *dev, libusc_device_settings * sett
     return 1;
 }
 
-unsigned short specifyServo(unsigned short p, unsigned char servo)
+static unsigned short specifyServo(unsigned short p, unsigned char servo)
 {
     const unsigned char servoParameterBytes = 9;
 
     return (unsigned short)((unsigned char)(p) + servo * servoParameterBytes);
 }
 
-unsigned short exponentialSpeedToNormalSpeed(unsigned char exponentialSpeed)
+static unsigned short exponentialSpeedToNormalSpeed(unsigned char exponentialSpeed)
 {
     // Maximum value of normalSpeed is 31*(1<<7)=3968
     int mantissa = exponentialSpeed >> 3;
@@ -545,7 +557,7 @@ unsigned short exponentialSpeedToNormalSpeed(unsigned char exponentialSpeed)
     return (unsigned short)(mantissa * (1 << exponent));
 }
 
-unsigned char normalSpeedToExponentialSpeed(unsigned short normalSpeed)
+static unsigned char normalSpeedToExponentialSpeed(unsigned short normalSpeed)
 {
     unsigned short mantissa = normalSpeed;
     unsigned char exponent = 0;
@@ -730,4 +742,3 @@ void libusc_write_script(libusc_device *dev, const char* bytecode, int length)
 
     //setRawParameter(uscParameter.PARAMETER_SCRIPT_CRC, program.getCRC());
 }
-
