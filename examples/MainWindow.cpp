@@ -136,7 +136,7 @@ void MainWindow::createToolBars()
     {
         libusc_device_settings settings;
         libusc_get_device_settings(device_list[i], &settings);
-        deviceList->addItem("#" + QString::number(settings.serialDeviceNumber), qVariantFromValue((void*)device_list[i]));
+        deviceList->addItem("#" + QString::number(settings.serialDeviceNumber), QVariant::fromValue((void*)device_list[i]));
 
         device = device_list[0];
     }
