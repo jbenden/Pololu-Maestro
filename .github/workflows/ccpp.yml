@@ -51,7 +51,7 @@ jobs:
 
     - name: Install PVS-Studio
       shell: bash
-      run: >-
+      run: |
         wget -q -O - https://files.viva64.com/etc/pubkey.txt \
           | sudo apt-key add -
         sudo wget -O /etc/apt/sources.list.d/viva64.list \
@@ -80,7 +80,7 @@ jobs:
       env:
         PVS_USERNAME: ${{ secrets.PVS_USERNAME }}
         PVS_KEY: ${{ secrets.PVS_KEY }}
-      run: >-
+      run: |
         pvs-studio-analyzer credentials $PVS_USERNAME $PVS_KEY
 
         if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
