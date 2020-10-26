@@ -85,8 +85,8 @@ void MainWindow::saveAs()
 void MainWindow::about()
 {
     QMessageBox::about(this, tr("About Recent Files"),
-                       tr("The <b>Recent Files</b> example demonstrates how to provide a "
-                          "recently used file menu in a Qt application."));
+                       tr("The <b>Pololu Maestro</b> example demonstrates how to provide a "
+                          "basic servo controls in a Qt application."));
 }
 
 void MainWindow::createActions()
