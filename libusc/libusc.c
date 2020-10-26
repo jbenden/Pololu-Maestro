@@ -390,7 +390,7 @@ void libusc_set_speed(libusc_device *dev, unsigned char servo, unsigned short va
 
 void libusc_set_acceleration(libusc_device *dev, unsigned char servo, unsigned short value)
 {
-    libusc_control_transfer(dev, 0x40, (unsigned char)REQUEST_SET_SERVO_VARIABLE, value, servo, (unsigned char*)(servo | 0x80), 0);
+    libusc_control_transfer(dev, 0x40, (unsigned char)REQUEST_SET_SERVO_VARIABLE, value, servo, (unsigned char*)((uintptr_t)(servo | 0x80)), 0);
 }
 
 int libusc_get_servo_status(libusc_device *dev, unsigned char servo, libusc_servo_status * status)
