@@ -95,4 +95,4 @@ jobs:
                                       --disableLicenseExpirationCheck
         fi
 
-        plog-converter -t errorfile PVS-Studio.log --cerr -w
+        plog-converter -t errorfile PVS-Studio.log -w
