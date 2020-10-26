@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.11.4)
 project(Maestro)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(WIN32 OR APPLE)
     add_subdirectory(libusb)
 else()
