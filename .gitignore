@@ -18,3 +18,4 @@ Thumbs.db
 
 /build/
 /compile_commands.json
+/PVS-Studio.log
