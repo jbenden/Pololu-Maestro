@@ -1,0 +1,11 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@libdir_for_pc_file@
+includedir=@includedir_for_pc_file@
+
+Name: libusc-1
+Description: Control Pololu Maestro USB Devices
+Version: @LIBUSC_VERSION@
+Libs: -L${libdir} -l@LIBUSC_LIB_NAME@
+Cflags: -I${includedir}
+
